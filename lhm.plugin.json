@@ -1,0 +1,666 @@
+{
+  "cloudEndpoint": "https://calculatepool.com/mcp?src=mcp",
+  "description": "Swimming pool math: how many gallons a pool holds by shape and size, chemical doses (chlorine, salt, alkalinity, pH, stabilizer, calcium), pump flow and heater BTU.",
+  "homepage": "https://calculatepool.com",
+  "identifier": "calculatepool",
+  "name": "Calculate Pool",
+  "prompts": [],
+  "resources": [],
+  "tools": [
+    {
+      "name": "pool_volume",
+      "title": "Pool volume in gallons",
+      "description": "Use this when someone wants to know how many gallons (or litres, cubic feet) a swimming pool holds from its shape and size: rectangle, round, oval, Roman, Grecian, kidney, L-shape or freeform, with one depth, a shallow and a deep end, or an above-ground wall height (48, 52, 54 in). Dimensions in feet or metres. Returns gallons, litres, cubic feet, cubic metres, surface area and the formula. Use it before chemical_dose, pump_size or heater_size when only dimensions are known.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "shape": {
+            "type": "string",
+            "enum": [
+              "rect",
+              "round",
+              "oval",
+              "roman",
+              "grecian",
+              "kidney",
+              "lshape",
+              "free"
+            ],
+            "description": "rect (default), round, oval, roman (half-circle ends), grecian (cut corners), kidney, lshape, free (freeform, needs area)."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "ft",
+              "m"
+            ],
+            "description": "Unit of every dimension and depth: ft (default) or m."
+          },
+          "dimensions": {
+            "type": "object",
+            "properties": {
+              "length": {
+                "type": "number",
+                "description": "rect, oval, roman, grecian, kidney, lshape."
+              },
+              "width": {
+                "type": "number",
+                "description": "rect, oval, roman, grecian, lshape."
+              },
+              "diameter": {
+                "type": "number",
+                "description": "round."
+              },
+              "widthA": {
+                "type": "number",
+                "description": "kidney: width of the wide end."
+              },
+              "widthB": {
+                "type": "number",
+                "description": "kidney: width of the narrow end."
+              },
+              "length2": {
+                "type": "number",
+                "description": "lshape: second rectangle length."
+              },
+              "width2": {
+                "type": "number",
+                "description": "lshape: second rectangle width."
+              },
+              "corner": {
+                "type": "number",
+                "description": "grecian: size of each 45° corner cut (optional)."
+              },
+              "area": {
+                "type": "number",
+                "description": "free: surface area in sq ft (or m² with unit m)."
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "shallow_depth": {
+            "type": "number",
+            "description": "Water depth at the shallow end, or the only depth for a constant-depth pool."
+          },
+          "deep_depth": {
+            "type": "number",
+            "description": "Water depth at the deep end (optional; average of the two is used)."
+          },
+          "above_ground_wall_in": {
+            "type": "integer",
+            "enum": [
+              48,
+              52,
+              54
+            ],
+            "description": "Above-ground round or oval pool: wall height in inches instead of depths."
+          }
+        },
+        "required": [
+          "shape",
+          "dimensions"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "shape": {
+            "type": "string"
+          },
+          "unit_in": {
+            "type": "string"
+          },
+          "gallons": {
+            "type": "integer"
+          },
+          "litres": {
+            "type": "integer"
+          },
+          "cubic_feet": {
+            "type": "number"
+          },
+          "cubic_metres": {
+            "type": "number"
+          },
+          "surface_area_sqft": {
+            "type": "number"
+          },
+          "average_depth_ft": {
+            "type": "number"
+          },
+          "formula": {
+            "type": "string"
+          },
+          "above_ground_wall_in": {
+            "type": "integer"
+          },
+          "link": {
+            "type": "string",
+            "description": "Page of calculatepool.com for the same calculation."
+          }
+        },
+        "required": [
+          "shape",
+          "unit_in",
+          "gallons",
+          "litres",
+          "cubic_feet",
+          "cubic_metres",
+          "surface_area_sqft",
+          "average_depth_ft",
+          "formula",
+          "link"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "title": "Pool volume in gallons"
+      }
+    },
+    {
+      "name": "chemical_dose",
+      "title": "Pool chemical dose",
+      "description": "Use this when someone asks how much of a pool chemical to add to go from a current to a target level: chlorine (liquid chlorine 12.5 %, bleach 10 % or 6 %, cal-hypo 65 % or 73 %, dichlor, trichlor) for free chlorine; salt for a salt chlorinator; baking soda to raise or muriatic acid to lower total alkalinity; stabilizer (cyanuric acid); calcium chloride for calcium hardness; muriatic acid to lower pH or soda ash to raise it. Levels in ppm (pH for the pH chemicals). Returns the amount in fl oz, oz or lb, a readable amount, the number of common packages, the factor used and a safety line. Not for shock targets or water-balance (LSI) questions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "chemical": {
+            "type": "string",
+            "enum": [
+              "liquid_chlorine_12_5",
+              "bleach_10",
+              "bleach_6",
+              "cal_hypo_65",
+              "cal_hypo_73",
+              "dichlor",
+              "trichlor",
+              "salt",
+              "baking_soda",
+              "stabilizer_cya",
+              "calcium_chloride",
+              "calcium_chloride_anhydrous",
+              "muriatic_acid_ph",
+              "muriatic_acid_ta",
+              "soda_ash"
+            ],
+            "description": "Product. muriatic_acid_ph lowers pH, muriatic_acid_ta lowers total alkalinity."
+          },
+          "gallons": {
+            "type": "number",
+            "minimum": 100,
+            "maximum": 2000000,
+            "description": "Pool volume in US gallons (from pool_volume if the user gave dimensions)."
+          },
+          "current": {
+            "type": "number",
+            "description": "Current level: ppm (free chlorine, salt, alkalinity, stabilizer, calcium hardness) or pH for muriatic_acid_ph and soda_ash."
+          },
+          "target": {
+            "type": "number",
+            "description": "Target level in the same unit as current."
+          },
+          "total_alkalinity": {
+            "type": "number",
+            "minimum": 20,
+            "maximum": 300,
+            "description": "Only for muriatic_acid_ph and soda_ash: current TA in ppm (default 100); the pH dose scales with it."
+          }
+        },
+        "required": [
+          "chemical",
+          "gallons",
+          "current",
+          "target"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "chemical": {
+            "type": "string"
+          },
+          "product": {
+            "type": "string"
+          },
+          "gallons": {
+            "type": "number"
+          },
+          "parameter": {
+            "type": "string"
+          },
+          "current": {
+            "type": "number"
+          },
+          "target": {
+            "type": "number"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "raise",
+              "lower"
+            ]
+          },
+          "total_alkalinity": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "fl oz",
+              "oz",
+              "lb"
+            ]
+          },
+          "amount_text": {
+            "type": "string"
+          },
+          "packages": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer"
+                  },
+                  "package": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "count",
+                  "package",
+                  "text",
+                  "note"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "factor": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "safety": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "description": "Page of calculatepool.com for the same calculation."
+          }
+        },
+        "required": [
+          "chemical",
+          "product",
+          "gallons",
+          "parameter",
+          "current",
+          "target",
+          "direction",
+          "amount",
+          "unit",
+          "amount_text",
+          "packages",
+          "factor",
+          "note",
+          "safety",
+          "link"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "title": "Pool chemical dose"
+      }
+    },
+    {
+      "name": "pump_size",
+      "title": "Pool pump flow rate",
+      "description": "Use this when someone asks what size pool pump they need or what flow rate turns their pool over in a given number of hours. Takes gallons and turnover hours (default 8). Returns gallons per minute, gallons per hour, a rule-of-thumb horsepower range, the minimum sand, cartridge and DE filter area for that flow, and pipe velocities. Not for electricity cost or pump model recommendations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "gallons": {
+            "type": "number",
+            "minimum": 100,
+            "maximum": 2000000,
+            "description": "Pool volume in US gallons (from pool_volume if the user gave dimensions)."
+          },
+          "turnover_hours": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 24,
+            "description": "Hours for one full turnover (default 8; 6 for heavy use)."
+          }
+        },
+        "required": [
+          "gallons"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "gallons": {
+            "type": "number"
+          },
+          "turnover_hours": {
+            "type": "number"
+          },
+          "gpm": {
+            "type": "number"
+          },
+          "gallons_per_hour": {
+            "type": "integer"
+          },
+          "hp_hint": {
+            "type": "string"
+          },
+          "filter_min_sqft": {
+            "type": "object",
+            "properties": {
+              "sand": {
+                "type": "number"
+              },
+              "cartridge": {
+                "type": "number"
+              },
+              "de": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "sand",
+              "cartridge",
+              "de"
+            ],
+            "additionalProperties": false
+          },
+          "pipe_velocity_fps": {
+            "type": "object",
+            "properties": {
+              "1.5_in": {
+                "type": "number"
+              },
+              "2_in": {
+                "type": "number"
+              },
+              "2.5_in": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "1.5_in",
+              "2_in",
+              "2.5_in"
+            ],
+            "additionalProperties": false
+          },
+          "note": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "description": "Page of calculatepool.com for the same calculation."
+          }
+        },
+        "required": [
+          "gallons",
+          "turnover_hours",
+          "gpm",
+          "gallons_per_hour",
+          "hp_hint",
+          "filter_min_sqft",
+          "pipe_velocity_fps",
+          "note",
+          "link"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "title": "Pool pump flow rate"
+      }
+    },
+    {
+      "name": "heater_size",
+      "title": "Pool heater BTU size",
+      "description": "Use this when someone asks what size pool heater (BTU per hour) they need to raise the water a number of degrees Fahrenheit in a given time. Takes gallons, the temperature rise in °F and the hours (default 24), plus an optional buffer for surface heat loss (default 20 %, the same as the heater calculator on calculatepool.com). Returns the BTU/h required, the size with the buffer, the total BTU and the electric input of an equivalent heat pump. Not for heating cost per month or heater model recommendations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "gallons": {
+            "type": "number",
+            "minimum": 100,
+            "maximum": 2000000,
+            "description": "Pool volume in US gallons (from pool_volume if the user gave dimensions)."
+          },
+          "temperature_rise_f": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 60,
+            "description": "Degrees Fahrenheit to raise the water."
+          },
+          "hours": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 168,
+            "description": "Hours to reach the temperature (default 24)."
+          },
+          "buffer_percent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Extra capacity for surface heat loss while heating (default 20)."
+          }
+        },
+        "required": [
+          "gallons",
+          "temperature_rise_f"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "gallons": {
+            "type": "number"
+          },
+          "temperature_rise_f": {
+            "type": "number"
+          },
+          "hours": {
+            "type": "number"
+          },
+          "buffer_percent": {
+            "type": "number"
+          },
+          "btu_per_hour_required": {
+            "type": "integer"
+          },
+          "btu_per_hour_with_buffer": {
+            "type": "integer"
+          },
+          "total_btu": {
+            "type": "integer"
+          },
+          "heat_pump_kw_input_cop5": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "description": "Page of calculatepool.com for the same calculation."
+          }
+        },
+        "required": [
+          "gallons",
+          "temperature_rise_f",
+          "hours",
+          "buffer_percent",
+          "btu_per_hour_required",
+          "btu_per_hour_with_buffer",
+          "total_btu",
+          "heat_pump_kw_input_cop5",
+          "note",
+          "link"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "title": "Pool heater BTU size"
+      }
+    },
+    {
+      "name": "pool_facts",
+      "title": "Standard pool sizes in gallons",
+      "description": "Use this when someone asks how many gallons a common pool size holds, e.g. a 24 ft round above-ground pool with a 52 in wall or a 16 x 32 inground pool, or wants a table of standard sizes. Returns inground rectangles (12x24 to 25x50 ft at 3.5, 4.5 and 5.5 ft average depth) and above-ground round and oval pools (12-33 ft round, 12x24 to 21x41 ft oval at 48, 52 and 54 in walls) with the factors used. For any other size or shape use pool_volume.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "all",
+              "inground",
+              "above_ground"
+            ],
+            "description": "Which table (default all)."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pool": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "gallons": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "depth": {
+                        "type": "string"
+                      },
+                      "gallons": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "depth",
+                      "gallons"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "pool",
+                "kind",
+                "gallons"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "factors": {
+            "type": "object",
+            "properties": {
+              "gallons_per_cubic_foot": {
+                "type": "number"
+              },
+              "round_and_oval_factor": {
+                "type": "number"
+              },
+              "litres_per_gallon": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "gallons_per_cubic_foot",
+              "round_and_oval_factor",
+              "litres_per_gallon"
+            ],
+            "additionalProperties": false
+          },
+          "note": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "description": "Page of calculatepool.com for the same calculation."
+          }
+        },
+        "required": [
+          "kind",
+          "rows",
+          "factors",
+          "note",
+          "link"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "title": "Standard pool sizes in gallons"
+      }
+    }
+  ],
+  "version": "1.1.0",
+  "tags": [
+    "pool",
+    "swimming-pool",
+    "calculator",
+    "home",
+    "remote"
+  ]
+}

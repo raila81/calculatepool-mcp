@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "calculatepool": {
+      "type": "streamable-http",
+      "url": "https://calculatepool.com/mcp?src=mcp"
+    }
+  }
+}
