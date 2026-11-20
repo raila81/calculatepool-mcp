@@ -1,0 +1,10 @@
+{
+  "name": "calculatepool",
+  "version": "1.1.0",
+  "description": "Swimming pool math: how many gallons a pool holds by shape and size, chemical doses (chlorine, salt, alkalinity, pH, stabilizer, calcium), pump flow and heater BTU.",
+  "mcpServers": {
+    "calculatepool": {
+      "httpUrl": "https://calculatepool.com/mcp?src=mcp"
+    }
+  }
+}
